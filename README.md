@@ -2,9 +2,9 @@
 
 ## Introduction
 
-This package contains a server and client for historical searches in bgp dumps.
-I'm not sure where this is going so for the moment this package is named
-internet to postpone the definition.
+This package utilities to import BGP table dumps and Autonomous system
+description lists from internet into redis databases to provide historical
+lookups for IP address to AS Number and AS Number to AS Descriptions.
 
 ## Documentation
 
