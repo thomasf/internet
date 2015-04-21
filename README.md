@@ -1,4 +1,4 @@
-# internet :) [![Build Status](https://drone.io/github.com/thomasf/internet/status.png)](https://drone.io/github.com/thomasf/internet/latest)
+# internet :) [![Build Status](https://drone.io/github.com/thomasf/internet/status.png)](https://drone.io/github.com/thomasf/internet/latest) [![GoDoc](https://godoc.org/github.com/thomasf/internet?status.svg)](https://godoc.org/github.com/thomasf/internet)
 
 ## Introduction
 
