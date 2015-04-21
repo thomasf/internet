@@ -9,37 +9,26 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
-// IP2ASNClient .
-type IP2ASNClient struct {
-	conn redis.Conn
-}
-
-func (i *IP2ASNClient) parseIP(IP string) (net.IP, error) {
-	I := net.ParseIP(IP)
-	if I == nil {
-		return nil, net.InvalidAddrError(IP)
-	}
-	return I, nil
-}
-
-func (i *IP2ASNClient) keys(IP net.IP) []net.IPNet {
-	var keys []net.IPNet
-	for _, n := range netmasks {
-		ipn := net.IPNet{
-			IP:   IP.Mask(n),
-			Mask: n,
-		}
-		keys = append(keys, ipn)
-	}
-	return keys
-}
-
-// NewIP2ASNClient .
+// NewIP2ASNClient returns a new client for IP address to AS Number queries.
+// The caller is reposible for closing the conn when the client is not used
+// anymore.
 func NewIP2ASNClient(conn redis.Conn) *IP2ASNClient {
 	ipasn := &IP2ASNClient{
 		conn: conn,
 	}
 	return ipasn
+}
+
+// ASNResult contains the lookup results from resolving an IP address to a ASN.
+type ASNResult struct {
+	Mask net.IPNet
+	ASN  int
+	Date time.Time // Recorded time for when
+}
+
+// IP2ASNClient is the query client.
+type IP2ASNClient struct {
+	conn redis.Conn
 }
 
 // Current returns the latest known result for an IP2ASN lookup.
@@ -80,11 +69,24 @@ func (i *IP2ASNClient) AllHistory(IP string) []ASNResult {
 	return result
 }
 
-// ASNResult contains the lookup results from resolving an IP address to a ASN.
-type ASNResult struct {
-	Mask net.IPNet
-	ASN  int
-	Date time.Time // Recorded time for when
+func (i *IP2ASNClient) parseIP(IP string) (net.IP, error) {
+	I := net.ParseIP(IP)
+	if I == nil {
+		return nil, net.InvalidAddrError(IP)
+	}
+	return I, nil
+}
+
+func (i *IP2ASNClient) keys(IP net.IP) []net.IPNet {
+	var keys []net.IPNet
+	for _, n := range netmasks {
+		ipn := net.IPNet{
+			IP:   IP.Mask(n),
+			Mask: n,
+		}
+		keys = append(keys, ipn)
+	}
+	return keys
 }
 
 // Stringer.

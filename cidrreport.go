@@ -16,14 +16,16 @@ import (
 	"golang.org/x/net/html"
 )
 
+// ASDescription contains the parsed result of an row inside a autnums.html file.
 type ASDescription struct {
-	ASN         int
-	Description string
-	CountryCode string
+	ASN         int    // AS Number
+	Description string // AS Description
+	CountryCode string // Country code (split from the as description field)
 }
 
+// CIDRReport encapuslates downloading and importing of autnums.html files.
 type CIDRReport struct {
-	Date time.Time
+	Date time.Time // Timestamp
 }
 
 // Path returns the absolute path to the target archive dump download file.

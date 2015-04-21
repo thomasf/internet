@@ -6,16 +6,18 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
-type ASN2ASDescClient struct {
-	conn redis.Conn
-}
-
-//NewASN2ASDescClient .
+//NewASN2ASDescClient returns a new client for quering the. The caller is
+//reposible for closing the conn when the client is not used anymore.
 func NewASN2ASDescClient(conn redis.Conn) *ASN2ASDescClient {
 	asnasd := ASN2ASDescClient{
 		conn: conn,
 	}
 	return &asnasd
+}
+
+//ASN2ASDescClient is the query client.
+type ASN2ASDescClient struct {
+	conn redis.Conn
 }
 
 // importedDates fetches all imported dates from redis
