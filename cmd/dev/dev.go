@@ -1,5 +1,8 @@
 package main
 
+// This file is just something I used while developing.. It's kind of an
+// example of usage but currently not a very clean one.
+
 import (
 	"flag"
 	"log"
