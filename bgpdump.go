@@ -65,8 +65,12 @@ func (b *BGPDump) Import(conn redis.Conn) error {
 		defer wg.Done()
 		b.parseBGPCSV(r, conn)
 	}(stdout)
-	c.Run()
+	err = c.Run()
+	if err != nil {
+		return err
+	}
 	wg.Wait()
+
 	return nil
 }
 
