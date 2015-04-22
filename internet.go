@@ -4,6 +4,8 @@ Package internet produces queryable information about the internet by
 fetching and downloading ripe BGP dumps and cidr-report.org data into redis
 databases.
 
+THE APIs WILL BE CONSIDERED STABLE WHEN THIS MESSAGE IS REMOVED IN MAY 2015.
+
 Features
 
 Download BGP table dumps from http://data.ris.ripe.net/rrc00. Entries are
