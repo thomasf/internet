@@ -1,6 +1,6 @@
-# internet :) [![Build Status](https://drone.io/github.com/thomasf/internet/status.png)](https://drone.io/github.com/thomasf/internet/latest) [![GoDoc](https://godoc.org/github.com/thomasf/internet?status.svg)](https://godoc.org/github.com/thomasf/internet)
+[![Build Status](https://drone.io/github.com/thomasf/internet/status.png)](https://drone.io/github.com/thomasf/internet/latest) [![GoDoc](https://godoc.org/github.com/thomasf/internet?status.svg)](https://godoc.org/github.com/thomasf/internet) [![Join the chat at https://gitter.im/thomasf/internet](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/thomasf/internet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-[![Join the chat at https://gitter.im/thomasf/internet](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/thomasf/internet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+# internet :) 
 
 ## Introduction
 
