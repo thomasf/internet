@@ -1,7 +1,6 @@
 package internet
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -53,39 +52,42 @@ func (b *CIDRReport) IsDownloaded() bool {
 }
 
 // Import stores the contents of a downloaded BGP dump into a redis server.
-func (b *CIDRReport) Import(conn redis.Conn) error {
+// -1 is returned if the dump is alredy imported into redis.
+func (b *CIDRReport) Import(conn redis.Conn) (int, error) {
 
 	alreadyImported, err := redis.Bool(conn.Do("SISMEMBER", "asd:imported_dates", b.day()))
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if alreadyImported {
-		return nil
+		return -1, nil
 	}
 
 	file, err := os.Open(b.Path())
 	if err != nil {
-		return err
+		return 0, err
 	}
 	n := 0
 	day := b.day()
-	err = parseReport(file, func(asd *ASDescription) {
+	err = parseReport(file, func(asd *ASDescription) error {
 		conn.Send("HSET", fmt.Sprintf("asd:%d", asd.ASN), day,
 			fmt.Sprintf("%s, %s", asd.Description, asd.CountryCode))
 		n++
 		if n%10000 == 0 {
 			err := conn.Flush()
 			if err != nil {
-				panic(err)
+				return err
+
 			}
 		}
+		return nil
 	})
 	conn.Send("SADD", "asd:imported_dates", day)
 	err = conn.Flush()
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
-	return nil
+	return n, nil
 }
 
 // Download fetches http://www.cidr-report.org/as2.0/autnums.html and stores it
@@ -134,26 +136,23 @@ func (b *CIDRReport) Download() error {
 }
 
 // RefreshCIDRReport ensures that the latest dump available is the one which is installed.
-func RefreshCIDRReport(conn redis.Conn) error {
+func RefreshCIDRReport(conn redis.Conn) (int, error) {
 	for _, b := range []CIDRReport{
 		{Date: time.Now()},
 		{Date: time.Now().Add(-time.Duration(time.Hour * 24))},
 	} {
 		err := b.Download()
 		if err != nil {
-			return err
+			return 0, err
 		}
 		if b.IsDownloaded() {
-			if err := b.Import(conn); err != nil {
-				return err
-			}
-			return nil
+			return b.Import(conn)
 		}
 	}
-	return nil
+	return 0, nil
 }
 
-func parseReport(r io.Reader, emitter func(*ASDescription)) error {
+func parseReport(r io.Reader, emitter func(*ASDescription) error) error {
 	z := html.NewTokenizer(r)
 	n := 0
 	depth := 0
@@ -169,7 +168,13 @@ loop:
 				desc := strings.TrimSpace(string(z.Text()))
 				ccpos := strings.LastIndex(desc, ",")
 				if ccpos == -1 {
-					return fmt.Errorf("Could not parse country code from %d %s", asn, desc)
+					return ParseError{
+						Message: "Could not parse country code",
+						Path:    "cidrreport",
+						LineNum: n,
+						Line:    fmt.Sprintf("asn:%s desc:%s", asn, desc),
+					}
+
 				}
 				emitter(&ASDescription{
 					ASN:         *asn,
@@ -183,7 +188,11 @@ loop:
 				var err error
 				i, err := strconv.Atoi(strings.TrimSpace(asnstr))
 				if err != nil {
-					return err
+					return ParseError{
+						Message: err.Error(),
+						Path:    "cidrreport",
+						LineNum: n,
+					}
 				}
 				asn = &i
 			}
@@ -199,7 +208,12 @@ loop:
 		}
 	}
 	if n == 0 {
-		return errors.New("No entries found, the parsing failed")
+		return ParseError{
+			Message: "no entries found",
+			Path:    "cidrreport",
+			LineNum: n,
+		}
+
 	}
 	return nil
 }

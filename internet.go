@@ -37,9 +37,21 @@ https://github.com/CIRCL/ASN-Description-History.
 package internet
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
+
+type ParseError struct {
+	Message string
+	Path    string
+	LineNum int
+	Line    string
+}
+
+func (p ParseError) Error() string {
+	return fmt.Sprintf("parse error: %s in %s:%d: %s", p.Message, p.Path, p.LineNum, p.Line)
+}
 
 var dataDir = filepath.Join(os.TempDir(), "internet")
 

@@ -26,19 +26,18 @@ func (i *ASN2ASDescClient) importedDates() ([]string, error) {
 }
 
 // Current returns the latest known result for an IP2ASN lookup.
-func (i *ASN2ASDescClient) Current(ASN int) string {
+func (i *ASN2ASDescClient) Current(ASN int) (string, error) {
 	allDates, err := i.importedDates()
 	if err != nil {
-		return ""
+		return "", err
 	}
 	if len(allDates) < 0 {
-		return ""
+		return "", err
 	}
 	current := allDates[len(allDates)-1]
 	result, err := redis.String(i.conn.Do("HGET", fmt.Sprintf("asd:%d", ASN), current))
 	if err != nil {
-		return ""
+		return "", err
 	}
-
-	return result
+	return result, nil
 }

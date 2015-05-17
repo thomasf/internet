@@ -18,7 +18,6 @@ import (
 func main() {
 	flag.Parse()
 	pool = newPool(*redisServer, "")
-
 	mainCidrr()
 	mainIP2ASN()
 }
@@ -27,6 +26,7 @@ func mainCidrr() {
 	cc := internet.CIDRReport{
 		Date: time.Now(),
 	}
+	log.Printf("DOWNLOAD %v", cc)
 	err := cc.Download()
 	if err != nil {
 		panic(err)
@@ -35,11 +35,14 @@ func mainCidrr() {
 	if cc.IsDownloaded() {
 		conn := pool.Get()
 		defer conn.Close()
-		err := cc.Import(conn)
+		log.Printf("IMPORT %v", cc)
+		start := time.Now()
+		n, err := cc.Import(conn)
 		if err != nil {
 			panic(err)
 		}
-
+		log.Printf("Imported %d rows from %s in %s",
+			n, filepath.Base(cc.Path()), time.Since(start))
 	}
 }
 
@@ -58,13 +61,25 @@ func DoLookup() {
 	q := internet.NewIP2ASNClient(conn)
 	q2 := internet.NewASN2ASDescClient(conn)
 	for _, i := range []string{"8.8.8.8", "5.150.255.150", "127.0.0.1"} {
-		res := q.Current(i)
+		res, err := q.Current(i)
+		if err != nil {
+			panic(err)
+		}
 		log.Printf("current   : %s: %s ", i, res)
 		if res != nil {
-			log.Printf("desc      : %s", q2.Current(res.ASN))
+			cur, err := q2.Current(res.ASN)
+			if err != nil {
+				panic(err)
+			}
+			log.Printf("desc      : %s", cur)
 		}
 		log.Printf("allhistory: %s", i)
-		for _, v := range q.AllHistory(i) {
+		allhist, err := q.AllHistory(i)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, v := range allhist {
 			log.Println(v.String())
 		}
 	}
@@ -91,20 +106,23 @@ func DoIndex() {
 					log.Println("Recovered in f", r, b.Path())
 				}
 			}()
-			// log.Printf("DOWNLOAD %s", b.Path())
+			log.Printf("DOWNLOAD %s", b.Path())
 			err := b.Download()
 			if err != nil {
 				panic(err)
 			}
 			if b.IsDownloaded() {
-				// log.Printf("IMPORT %s", b.Path())
+				log.Printf("IMPORT %s", b.Path())
 				conn := pool.Get()
 				defer conn.Close()
-				err := b.Import(conn)
-
+				start := time.Now()
+				n, err := b.Import(conn)
 				if err != nil {
 					panic(err)
 				}
+				log.Printf("Imported %d rows from %s in %s",
+					n, filepath.Base(b.Path()), time.Since(start))
+
 			}
 		}(b)
 	}

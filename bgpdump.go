@@ -2,6 +2,7 @@ package internet
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,30 +12,26 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
 )
 
 // RefreshBGPDump ensures that the latest dump available is the one which is installed.
-func RefreshBGPDump(conn redis.Conn) error {
+func RefreshBGPDump(conn redis.Conn) (int, error) {
 	for _, b := range []BGPDump{
 		{Date: time.Now()},
 		{Date: time.Now().Add(-time.Duration(time.Hour * 24))},
 	} {
 		err := b.Download()
 		if err != nil {
-			return err
+			return 0, err
 		}
 		if b.IsDownloaded() {
-			if err := b.Import(conn); err != nil {
-				return err
-			}
-			return nil
+			return b.Import(conn)
 		}
 	}
-	return nil
+	return 0, nil
 }
 
 // BGPDump encapuslates downloading and importing of BGP dumps.
@@ -43,35 +40,60 @@ type BGPDump struct {
 }
 
 // Import stores the contents of a downloaded BGP dump into a redis server.
-func (b *BGPDump) Import(conn redis.Conn) error {
-
+// -1 is returned if the dump is alredy imported into redis.
+func (b *BGPDump) Import(conn redis.Conn) (int, error) {
 	alreadyImported, err := redis.Bool(conn.Do("SISMEMBER", "i2a:imported_dates", b.day()))
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
 	if alreadyImported {
-		return nil
+		return -1, nil
 	}
 	c := exec.Command("bgpdump", "-m", b.Path())
-
 	stdout, err := c.StdoutPipe()
 	if err != nil {
-		return err
-
+		return 0, err
 	}
-	var wg sync.WaitGroup
-	wg.Add(1)
+
+	type nErr struct {
+		n   int
+		err error
+	}
+
+	parseC := make(chan nErr)
 	go func(r io.Reader) {
-		defer wg.Done()
-		b.parseBGPCSV(r, conn)
+		defer func() {
+			if err := recover(); err != nil {
+				log.Println(err)
+				switch err.(type) {
+				case error:
+					parseC <- nErr{
+						err: err.(error),
+					}
+				default:
+					parseC <- nErr{err: errors.New("unknown error")}
+				}
+			}
+		}()
+		n, err := b.parseBGPCSV(r, conn)
+		parseC <- nErr{n, err}
 	}(stdout)
-	err = c.Run()
-	if err != nil {
-		return err
-	}
-	wg.Wait()
 
-	return nil
+	execC := make(chan error)
+	go func() {
+		err = c.Run()
+		if err != nil {
+			execC <- err
+		}
+	}()
+
+	select {
+	case err := <-execC:
+		return 0, err
+	case ne := <-parseC:
+		return ne.n, ne.err
+	}
+
 }
 
 // IsDownloaded returns true if the BGPDump archive is downloaded locally.
@@ -152,18 +174,20 @@ func (b *BGPDump) Download() error {
 
 }
 
-func (b *BGPDump) parseBGPCSV(r io.Reader, conn redis.Conn) error {
+func (b *BGPDump) parseBGPCSV(r io.Reader, conn redis.Conn) (int, error) {
 	day := b.day()
-
-	start := time.Now()
 	s := bufio.NewScanner(r)
 	n := 0
 	var asn string
 	for s.Scan() {
 		cols := strings.Split(s.Text(), "|")
 		if len(cols) < 7 {
-			log.Printf("Too few columns in %s:%d: %s", filepath.Base(b.Path()), n, s.Text())
-			continue
+			return n, ParseError{
+				Message: "too few columns",
+				Path:    filepath.Base(b.Path()),
+				LineNum: n,
+				Line:    s.Text(),
+			}
 		}
 		block := cols[5]
 
@@ -174,8 +198,12 @@ func (b *BGPDump) parseBGPCSV(r io.Reader, conn redis.Conn) error {
 			asns := strings.Split(asPath, " ")
 			asn = asns[len(asns)-1]
 			if asn == "" {
-				log.Printf("No ASPATH data for %s:%d: %s", filepath.Base(b.Path()), n, s.Text())
-				continue
+				return n, ParseError{
+					Message: "no ASPATH data",
+					Path:    filepath.Base(b.Path()),
+					LineNum: n,
+					Line:    s.Text(),
+				}
 			}
 		}
 		conn.Send("HSET", fmt.Sprintf("i2a:%s", block), day, asn)
@@ -183,20 +211,16 @@ func (b *BGPDump) parseBGPCSV(r io.Reader, conn redis.Conn) error {
 		if n%10000 == 0 {
 			err := conn.Flush()
 			if err != nil {
-				panic(err)
+				return 0, err
 			}
 		}
 	}
 	conn.Send("SADD", "i2a:imported_dates", day)
 	err := conn.Flush()
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
-
-	log.Printf("Imported %d rows from %s in %s",
-		n, filepath.Base(b.Path()), time.Since(start))
-
-	return nil
+	return n, nil
 }
 
 // Path returns the absolute path to the target archive dump download file.

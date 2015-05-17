@@ -3,7 +3,6 @@ package internet
 import (
 	"os"
 	"testing"
-
 	"time"
 
 	"github.com/garyburd/redigo/redis"
@@ -26,8 +25,13 @@ func TestParseDump(t *testing.T) {
 	}
 	conn := redigomock.NewConn()
 	b := BGPDump{Date: time.Date(2015, 1, 1, 0, 0, 0, 0, time.UTC)}
-	b.parseBGPCSV(file, conn)
-
+	n, err := b.parseBGPCSV(file, conn)
+	if err != nil {
+		panic(err)
+	}
+	if n != 801 {
+		t.Fatalf("expected 801 imported entries, got %d", n)
+	}
 }
 
 func TestParseBrokenDump(t *testing.T) {
@@ -35,12 +39,16 @@ func TestParseBrokenDump(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-
 	conn := redigomock.NewConn()
 	b := BGPDump{Date: time.Date(2015, 1, 2, 0, 0, 0, 0, time.UTC)}
-	err = b.parseBGPCSV(file, conn)
-	if err != nil {
-		panic(err)
+	n, err := b.parseBGPCSV(file, conn)
+	if err == nil {
+		t.Fatalf("expected parse error")
 	}
-
+	if n != 5 {
+		t.Fatalf("expected parse error on line 5 but %d lines were read", n)
+	}
+	if _, ok := err.(ParseError); !ok {
+		t.Fatalf("expected parse error, got %s", err)
+	}
 }

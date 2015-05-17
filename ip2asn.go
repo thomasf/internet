@@ -32,41 +32,44 @@ type IP2ASNClient struct {
 }
 
 // Current returns the latest known result for an IP2ASN lookup.
-func (i *IP2ASNClient) Current(IP string) *ASNResult {
+func (i *IP2ASNClient) Current(IP string) (*ASNResult, error) {
 	ip, err := i.parseIP(IP)
 	if err != nil {
-		return &ASNResult{}
+		return &ASNResult{}, err
 	}
 	var current string
 	allDates, err := i.importedDates()
 	if err != nil {
-		return &ASNResult{}
+		return &ASNResult{}, err
 	}
 
 	if len(allDates) < 0 {
-		return &ASNResult{}
+		return &ASNResult{}, err
 	}
 	current = allDates[len(allDates)-1]
 
-	results := i.dates(ip, []string{current})
-	if len(results) > 0 {
-		return &results[0]
+	results, err := i.dates(ip, []string{current})
+	if err != nil {
+		return nil, err
 	}
-	return nil
+
+	if len(results) > 0 {
+		return &results[0], nil
+	}
+	return nil, nil
 }
 
 // AllHistory returns the full history for the given IP address.
-func (i *IP2ASNClient) AllHistory(IP string) []ASNResult {
+func (i *IP2ASNClient) AllHistory(IP string) ([]ASNResult, error) {
 	ip, err := i.parseIP(IP)
 	if err != nil {
-		return []ASNResult{}
+		return []ASNResult{}, err
 	}
 	dates, err := i.importedDates()
 	if err != nil {
-		panic(err)
+		return []ASNResult{}, err
 	}
-	result := i.dates(ip, dates)
-	return result
+	return i.dates(ip, dates)
 }
 
 func (i *IP2ASNClient) parseIP(IP string) (net.IP, error) {
@@ -103,7 +106,7 @@ func (i *IP2ASNClient) importedDates() ([]string, error) {
 }
 
 // dates resolves IP2ASN for all date entries, if available.
-func (i *IP2ASNClient) dates(IP net.IP, dates []string) []ASNResult {
+func (i *IP2ASNClient) dates(IP net.IP, dates []string) ([]ASNResult, error) {
 	keys := i.keys(IP)
 	for _, d := range dates {
 		for _, k := range keys {
@@ -123,14 +126,14 @@ func (i *IP2ASNClient) dates(IP net.IP, dates []string) []ASNResult {
 					if err == redis.ErrNil {
 						continue
 					}
-					panic(err)
+					return []ASNResult{}, err
 				}
 
 				timedate, err := time.Parse("20060102", date)
 				asn, err := strconv.Atoi(r)
 				if err != nil {
 					// redis data error
-					panic(err)
+					return []ASNResult{}, err
 				}
 				results = append(results, ASNResult{
 					Mask: keys[idx],
@@ -144,7 +147,7 @@ func (i *IP2ASNClient) dates(IP net.IP, dates []string) []ASNResult {
 		}
 
 	}
-	return results
+	return results, nil
 }
 
 // RIPE-NCC-RIS BGP IPv6 Anchor Prefix @RRC00
