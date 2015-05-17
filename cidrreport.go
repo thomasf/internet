@@ -172,7 +172,7 @@ loop:
 						Message: "Could not parse country code",
 						Path:    "cidrreport",
 						LineNum: n,
-						Line:    fmt.Sprintf("asn:%s desc:%s", asn, desc),
+						Line:    fmt.Sprintf("asn:%d desc:%s", asn, desc),
 					}
 
 				}
