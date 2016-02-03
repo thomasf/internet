@@ -2,19 +2,20 @@ package internet
 
 import (
 	"bufio"
-	"errors"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/garyburd/redigo/redis"
+	bgp "github.com/osrg/gobgp/packet"
 )
 
 // RefreshBGPDump ensures that the latest dump available is the one which is installed.
@@ -49,50 +50,8 @@ func (b *BGPDump) Import(conn redis.Conn) (int, error) {
 	if alreadyImported {
 		return -1, nil
 	}
-	c := exec.Command("bgpdump", "-m", b.Path())
-	stdout, err := c.StdoutPipe()
-	if err != nil {
-		return 0, err
-	}
-
-	type nErr struct {
-		n   int
-		err error
-	}
-
-	parseC := make(chan nErr)
-	go func(r io.Reader) {
-		defer func() {
-			if err := recover(); err != nil {
-				log.Println(err)
-				switch err.(type) {
-				case error:
-					parseC <- nErr{
-						err: err.(error),
-					}
-				default:
-					parseC <- nErr{err: errors.New("unknown error")}
-				}
-			}
-		}()
-		n, err := b.parseBGPCSV(r, conn)
-		parseC <- nErr{n, err}
-	}(stdout)
-
-	execC := make(chan error)
-	go func() {
-		err = c.Run()
-		if err != nil {
-			execC <- err
-		}
-	}()
-
-	select {
-	case err := <-execC:
-		return 0, err
-	case ne := <-parseC:
-		return ne.n, ne.err
-	}
+	n, err := b.parseBGPDump(conn)
+	return n, err
 
 }
 
@@ -172,6 +131,96 @@ func (b *BGPDump) Download() error {
 	}
 	return nil
 
+}
+
+func (b *BGPDump) parseBGPDump(conn redis.Conn) (int, error) {
+	day := b.day()
+	n := 0
+
+	f, err := os.Open(b.Path())
+	if err != nil {
+		return 0, err
+	}
+
+	gzipReader, err := gzip.NewReader(f)
+	if err != nil {
+		return n, fmt.Errorf("couldn't create gzip reader: %v", err)
+	}
+	scanner := bufio.NewScanner(gzipReader)
+	scanner.Split(bgp.SplitMrt)
+	count := 0
+
+	indexTableCount := 0
+entries:
+	for scanner.Scan() {
+		count++
+		data := scanner.Bytes()
+
+		hdr := &bgp.MRTHeader{}
+		errh := hdr.DecodeFromBytes(data[:bgp.MRT_COMMON_HEADER_LEN])
+		if err != nil {
+			return 0, errh
+		}
+
+		msg, err := bgp.ParseMRTBody(hdr, data[bgp.MRT_COMMON_HEADER_LEN:])
+		if err != nil {
+			log.Printf("could not parse mrt body: %v", err)
+			continue entries
+		}
+
+		if msg.Header.Type != bgp.TABLE_DUMPv2 {
+			return 0, fmt.Errorf("unexpected message type: %d", msg.Header.Type)
+		}
+
+		switch mtrBody := msg.Body.(type) {
+		case *bgp.PeerIndexTable:
+			indexTableCount++
+			if indexTableCount != 1 {
+				return 0, fmt.Errorf("got >1 PeerIndexTable")
+			}
+
+		case *bgp.Rib:
+			prefix := mtrBody.Prefix
+			if len(mtrBody.Entries) < 0 {
+				return 0, fmt.Errorf("no entries")
+			}
+
+			for _, entry := range mtrBody.Entries {
+			attrs:
+				for _, attr := range entry.PathAttributes {
+					switch attr := attr.(type) {
+					case *bgp.PathAttributeAsPath:
+						if len(attr.Value) < 1 {
+							continue attrs
+						}
+						if v, ok := attr.Value[0].(*bgp.As4PathParam); ok {
+							if len(v.AS) < 0 {
+								continue attrs
+							}
+							conn.Send("HSET", fmt.Sprintf("i2a:%s", prefix), day, v.AS[len(v.AS)-1])
+							n++
+							if n%10000 == 0 {
+								err := conn.Flush()
+								if err != nil {
+									return 0, err
+								}
+							}
+							continue entries
+						}
+					}
+				}
+			}
+		default:
+			return 0, fmt.Errorf("unsupported message %v %s", mtrBody, spew.Sdump(msg))
+		}
+	}
+	conn.Send("SADD", "i2a:imported_dates", day)
+	err = conn.Flush()
+	if err != nil {
+		return 0, err
+	}
+
+	return n, nil
 }
 
 func (b *BGPDump) parseBGPCSV(r io.Reader, conn redis.Conn) (int, error) {
