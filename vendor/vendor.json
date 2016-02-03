@@ -1,0 +1,31 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"path": "github.com/davecgh/go-spew/spew",
+			"revision": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d",
+			"revisionTime": "2015-11-05T15:09:06-06:00"
+		},
+		{
+			"path": "github.com/garyburd/redigo/internal",
+			"revision": "836b6e58b3358112c8291565d01c35b8764070d7",
+			"revisionTime": "2015-12-19T15:20:44-08:00"
+		},
+		{
+			"path": "github.com/garyburd/redigo/redis",
+			"revision": "836b6e58b3358112c8291565d01c35b8764070d7",
+			"revisionTime": "2015-12-19T15:20:44-08:00"
+		},
+		{
+			"path": "github.com/osrg/gobgp/packet",
+			"revision": "f41f0b638276dc63949e437d9c0c5bbf8a3b37b0",
+			"revisionTime": "2016-02-02T17:11:11-08:00"
+		},
+		{
+			"path": "golang.org/x/net/html",
+			"revision": "74d798388a60469ca4db467af4ff70242c2d9ead",
+			"revisionTime": "2016-02-03T00:20:23Z"
+		}
+	]
+}
