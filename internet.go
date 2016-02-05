@@ -15,17 +15,9 @@ Download http://www.cidr-report.org/as2.0/autnums.html (controlled to once per
 day). Entries are stored in redis for current and historical AS Number to AS
 Description lookup.
 
-All downloads are cached so that databases can be rebuilt easily.
+All downloads are cached so that databases can be rebuilt on demand.
 
-Golang redis query clients are also also included.
-
-Pre requirements
-
-BGPDump: http://www.ris.ripe.net/source/bgpdump/. Download, compile and install
-it somewhere into PATH.
-
-A Redis server.
-
+A Redis server is used to store and make lookups against.
 
 Acknowledgments
 
