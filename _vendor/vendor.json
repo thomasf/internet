@@ -19,13 +19,18 @@
 		},
 		{
 			"path": "github.com/osrg/gobgp/packet",
-			"revision": "f41f0b638276dc63949e437d9c0c5bbf8a3b37b0",
-			"revisionTime": "2016-02-02T17:11:11-08:00"
+			"revision": "e9bc2a896075edd991fd59334dbbab4b3c5b2f68",
+			"revisionTime": "2016-01-10T15:53:49+09:00"
 		},
 		{
 			"path": "golang.org/x/net/html",
-			"revision": "74d798388a60469ca4db467af4ff70242c2d9ead",
-			"revisionTime": "2016-02-03T00:20:23Z"
+			"revision": "cbbbe2bc0f2efdd2afb318d93f1eadb19350e4a3",
+			"revisionTime": "2016-02-13T01:55:36Z"
+		},
+		{
+			"path": "golang.org/x/net/html/atom",
+			"revision": "cbbbe2bc0f2efdd2afb318d93f1eadb19350e4a3",
+			"revisionTime": "2016-02-13T01:55:36Z"
 		}
 	]
 }
