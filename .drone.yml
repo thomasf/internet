@@ -1,0 +1,6 @@
+build:
+  image: drone/golang:1.5
+  environment:
+    - GO15VENDOREXPERIMENT=1
+  commands:
+    - go test
