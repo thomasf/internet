@@ -3,4 +3,8 @@ build:
   environment:
     - GO15VENDOREXPERIMENT=1
   commands:
+    - mv _vendor vendor
+    - go test
+    - mv vendor _vendor
+    - go get -t ./...
     - go test
