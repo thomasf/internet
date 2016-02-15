@@ -13,6 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"encoding/json"
+
+	// "github.com/alecthomas/mph"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/garyburd/redigo/redis"
 	bgp "github.com/osrg/gobgp/packet"
@@ -151,6 +154,8 @@ func (b *BGPDump) parseBGPDump(conn redis.Conn) (int, error) {
 	count := 0
 
 	indexTableCount := 0
+	db := make(map[string]uint32, 0)
+
 entries:
 	for scanner.Scan() {
 		count++
@@ -197,7 +202,9 @@ entries:
 							if len(v.AS) < 0 {
 								continue attrs
 							}
-							conn.Send("HSET", fmt.Sprintf("i2a:%s", prefix), day, v.AS[len(v.AS)-1])
+							asn := v.AS[len(v.AS)-1]
+							conn.Send("HSET", fmt.Sprintf("i2a:%s", prefix), day, asn)
+							db[prefix.String()] = asn
 							n++
 							if n%10000 == 0 {
 								err := conn.Flush()
@@ -214,7 +221,15 @@ entries:
 			return 0, fmt.Errorf("unsupported message %v %s", mtrBody, spew.Sdump(msg))
 		}
 	}
+
 	conn.Send("SADD", "i2a:imported_dates", day)
+
+	jbytes, err := json.Marshal(&db)
+	if err != nil {
+		panic(err)
+	}
+	ioutil.WriteFile(b.ParsedPath(), jbytes, 0660)
+
 	err = conn.Flush()
 	if err != nil {
 		return 0, err
@@ -276,6 +291,12 @@ func (b *BGPDump) parseBGPCSV(r io.Reader, conn redis.Conn) (int, error) {
 func (b *BGPDump) Path() string {
 	return filepath.Join(
 		b.dir(), fmt.Sprintf("%s.gz", b.Date.Format("20060102")))
+}
+
+// Path returns the absolute path to the target archive dump download file.
+func (b *BGPDump) ParsedPath() string {
+	return filepath.Join(
+		b.dir(), fmt.Sprintf("%s.json", b.Date.Format("20060102")))
 }
 
 func (b *BGPDump) dir() string {
