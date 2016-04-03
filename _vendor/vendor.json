@@ -1,36 +1,43 @@
 {
 	"comment": "",
-    "ignore": "",
+	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "5rPfda8jFccr3A6heL+JAmi9K9g=",
 			"path": "github.com/davecgh/go-spew/spew",
 			"revision": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d",
-			"revisionTime": "2015-11-05T15:09:06-06:00"
+			"revisionTime": "2015-11-05T21:09:06Z"
 		},
 		{
+			"checksumSHA1": "2UmMbNHc8FBr98mJFN1k8ISOIHk=",
 			"path": "github.com/garyburd/redigo/internal",
-			"revision": "836b6e58b3358112c8291565d01c35b8764070d7",
-			"revisionTime": "2015-12-19T15:20:44-08:00"
+			"revision": "4ed1111375cbeb698249ffe48dd463e9b0a63a7a",
+			"revisionTime": "2016-03-02T23:46:02Z"
 		},
 		{
+			"checksumSHA1": "ThAHOZ525o29BQpFZ1H5UA8QJ+c=",
 			"path": "github.com/garyburd/redigo/redis",
-			"revision": "836b6e58b3358112c8291565d01c35b8764070d7",
-			"revisionTime": "2015-12-19T15:20:44-08:00"
+			"revision": "4ed1111375cbeb698249ffe48dd463e9b0a63a7a",
+			"revisionTime": "2016-03-02T23:46:02Z"
 		},
 		{
-			"path": "github.com/osrg/gobgp/packet",
-			"revision": "e9bc2a896075edd991fd59334dbbab4b3c5b2f68",
-			"revisionTime": "2016-01-10T15:53:49+09:00"
+			"checksumSHA1": "8oQAG85Lhjj5sE33WYiNO6T6BP4=",
+			"path": "github.com/osrg/gobgp/packet/bgp",
+			"revision": "a030c52bf2a5b6feda281355599bf22c6b7afdd3",
+			"revisionTime": "2016-03-31T21:06:43Z"
 		},
 		{
+			"checksumSHA1": "vqc3a+oTUGX8PmD0TS+qQ7gmN8I=",
 			"path": "golang.org/x/net/html",
-			"revision": "cbbbe2bc0f2efdd2afb318d93f1eadb19350e4a3",
-			"revisionTime": "2016-02-13T01:55:36Z"
+			"revision": "3e8a7b0329d536af18e227bb21b6da4d1dbbe180",
+			"revisionTime": "2016-03-29T01:55:07Z"
 		},
 		{
+			"checksumSHA1": "00eQaGynDYrv3tL+C7l9xH0IDZg=",
 			"path": "golang.org/x/net/html/atom",
-			"revision": "cbbbe2bc0f2efdd2afb318d93f1eadb19350e4a3",
-			"revisionTime": "2016-02-13T01:55:36Z"
+			"revision": "3e8a7b0329d536af18e227bb21b6da4d1dbbe180",
+			"revisionTime": "2016-03-29T01:55:07Z"
 		}
-	]
+	],
+	"rootPath": "github.com/thomasf/internet"
 }
