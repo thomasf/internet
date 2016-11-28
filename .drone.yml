@@ -1,7 +1,5 @@
 build:
-  image: drone/golang:1.5
-  environment:
-    - GO15VENDOREXPERIMENT=1
+  image: golang:1.7
   commands:
     - mv _vendor vendor
     - go test
