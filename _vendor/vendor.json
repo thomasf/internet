@@ -21,16 +21,22 @@
 			"revisionTime": "2016-03-02T23:46:02Z"
 		},
 		{
-			"checksumSHA1": "8oQAG85Lhjj5sE33WYiNO6T6BP4=",
+			"checksumSHA1": "UNiU5XZxgdXsVkLxrz4bqqAiqN4=",
 			"path": "github.com/osrg/gobgp/packet/bgp",
-			"revision": "a030c52bf2a5b6feda281355599bf22c6b7afdd3",
-			"revisionTime": "2016-03-31T21:06:43Z"
+			"revision": "9f13bbed20f6957310ef8c54c2cc3ff015274667",
+			"revisionTime": "2016-11-25T05:36:27Z"
+		},
+		{
+			"checksumSHA1": "mG0vIsMoZU8m4dd7r0ESV1swJS0=",
+			"path": "github.com/osrg/gobgp/packet/mrt",
+			"revision": "9f13bbed20f6957310ef8c54c2cc3ff015274667",
+			"revisionTime": "2016-11-25T05:36:27Z"
 		},
 		{
 			"checksumSHA1": "vqc3a+oTUGX8PmD0TS+qQ7gmN8I=",
 			"path": "golang.org/x/net/html",
-			"revision": "3e8a7b0329d536af18e227bb21b6da4d1dbbe180",
-			"revisionTime": "2016-03-29T01:55:07Z"
+			"revision": "4971afdc2f162e82d185353533d3cf16188a9f4e",
+			"revisionTime": "2016-11-15T21:05:04Z"
 		},
 		{
 			"checksumSHA1": "00eQaGynDYrv3tL+C7l9xH0IDZg=",
