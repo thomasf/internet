@@ -1,5 +1,5 @@
 build:
-  image: drone/golang:1.5
+  image: drone/golang:1.7
   environment:
     - GO15VENDOREXPERIMENT=1
   commands:
