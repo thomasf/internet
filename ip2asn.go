@@ -166,4 +166,7 @@ func init() {
 	for i := 0; i < 8*net.IPv4len; i++ {
 		netmasks = append(netmasks, net.CIDRMask(8*net.IPv4len-i, 8*net.IPv4len))
 	}
+	for i := 0; i < 8*net.IPv6len; i++ {
+		netmasks = append(netmasks, net.CIDRMask(4*net.IPv6len-i, 8*net.IPv6len))
+	}
 }
