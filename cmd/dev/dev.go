@@ -83,6 +83,36 @@ func DoLookup() {
 			log.Println(v.String())
 		}
 	}
+
+	var wg sync.WaitGroup
+	start := time.Now()
+	nq := 10000
+	nw := 1
+	for wn := 0; wn < nw; wn++ {
+		wg.Add(1)
+		go func(wn int) {
+		q := internet.NewIP2ASNClient(conn)
+			log.Println("start", wn)
+			defer wg.Done()
+			for n := 0; n < nq; n++ {
+				for _, i := range []string{"8.8.8.8", "5.150.255.150", "127.0.0.1"} {
+					res, err := q.Current(i)
+					if err != nil {
+						panic(err)
+					}
+					_ = res
+					// log.Printf("current   : %s: %s ", i, res)
+
+				}
+			}
+			log.Println("done", wn)
+		}(wn)
+
+	}
+	wg.Wait()
+	end := time.Now().Sub(start)
+	log.Printf("%d queries in %v, %f quries/s", nw*nq, end, float64(nw*nq)/end.Seconds())
+
 }
 
 func DoIndex() {

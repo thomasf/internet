@@ -33,6 +33,13 @@ func (b *CIDRReport) Path() string {
 		b.dir(), fmt.Sprintf("cidr-report-%s.txt", b.Date.Format("20060102")))
 }
 
+// Path returns the absolute path to the target archive dump download file.
+func (b *CIDRReport) ParesedPath() string {
+	return filepath.Join(
+		b.dir(), fmt.Sprintf("cidr-report-%s.json", b.Date.Format("20060102")))
+}
+
+
 func (b *CIDRReport) dir() string {
 	return filepath.Join(
 		dataDir, "cache", b.Date.Format("200601"))
